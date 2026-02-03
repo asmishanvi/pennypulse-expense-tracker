@@ -1,0 +1,21 @@
+# Gradle & build outputs
+.gradle/
+**/build/
+/build/
+
+# Local config
+local.properties
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Android Studio
+captures/
+externalNativeBuild/
+cxx/
