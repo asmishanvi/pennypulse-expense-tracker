@@ -1,4 +1,4 @@
-# PennyPulse – Expense Tracker (Android)<img width="1080" height="2400" alt="Screenshot_20260204_021453" src="https://github.com/user-attachments/assets/983c18e1-1bdf-47b4-b7b7-6acc8035e63a" />
+# PennyPulse – Expense Tracker (Android)<img width="500" height="500" alt="Screenshot_20260204_021453" src="https://github.com/user-attachments/assets/983c18e1-1bdf-47b4-b7b7-6acc8035e63a" />
 
 
 
