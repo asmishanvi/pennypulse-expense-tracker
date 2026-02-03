@@ -1,17 +1,13 @@
 # PennyPulse – Expense Tracker (Android)
 
 An aesthetic, offline-first expense tracker built with Kotlin, Jetpack Compose, and Room.
+<img width="1080" height="2400" alt="Screenshot_20260204_021517" src="https://github.com/user-attachments/assets/84cc118c-3d7a-49c5-92f0-ba77c1365661" />
 
 ## Screenshots
-Add your screenshots here (recommended: 3-4 images).
+<img width="1080" height="2400" alt="Screenshot_20260204_021508" src="https://github.com/user-attachments/assets/3f4753ef-05a3-493d-bbd3-2ac29ddd1eea" /><img width="1080" height="2400" alt="Screenshot_20260204_021453" src="https://github.com/user-attachments/assets/5597c0da-1f07-478e-899b-329f4f363575" />
 
-```
-screenshots/
-  home.png
-  insights.png
-  edit.png
-  filters.png
-```
+
+
 
 ## Features
 - Add, edit, and delete expenses
