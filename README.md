@@ -4,9 +4,9 @@ An aesthetic, offline-first expense tracker built with Kotlin, Jetpack Compose, 
 
 ## Screenshots
 <p align="center">
+   <img src="https://github.com/user-attachments/assets/5597c0da-1f07-478e-899b-329f4f363575" width="280" />
   <img src="https://github.com/user-attachments/assets/84cc118c-3d7a-49c5-92f0-ba77c1365661" width="280" />
-  <img src="https://github.com/user-attachments/assets/3f4753ef-05a3-493d-bbd3-2ac29ddd1eea" width="280" />
-  <img src="https://github.com/user-attachments/assets/5597c0da-1f07-478e-899b-329f4f363575" width="280" />
+   <img src="https://github.com/user-attachments/assets/3f4753ef-05a3-493d-bbd3-2ac29ddd1eea" width="280" />
 </p>
 
 ## Features
