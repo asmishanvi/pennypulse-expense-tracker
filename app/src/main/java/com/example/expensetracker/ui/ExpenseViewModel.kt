@@ -63,6 +63,16 @@ data class ExpenseFilters(
             startDate != null ||
             endDate != null
     }
+
+    fun activeCount(): Int {
+        var count = 0
+        if (query.isNotBlank()) count++
+        if (selectedCategories.isNotEmpty()) count++
+        if (minAmountInput.isNotBlank()) count++
+        if (maxAmountInput.isNotBlank()) count++
+        if (startDate != null || endDate != null) count++
+        return count
+    }
 }
 
 private data class ExpenseBundle(

@@ -249,8 +249,8 @@ private fun AppBottomBar(
             selectedIconColor = MaterialTheme.colorScheme.primary,
             selectedTextColor = MaterialTheme.colorScheme.primary,
             indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
-            unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-            unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
         NavigationBar(
             containerColor = Color.Transparent,

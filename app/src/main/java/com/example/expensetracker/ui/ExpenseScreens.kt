@@ -21,6 +21,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Box
@@ -52,9 +53,13 @@ import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -69,6 +74,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -80,6 +86,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -96,9 +104,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
@@ -133,8 +147,33 @@ fun ExpenseListScreen(
     onClearFilters: () -> Unit
 ) {
     var showFab by remember { mutableStateOf(false) }
+    var showFilters by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
     androidx.compose.runtime.LaunchedEffect(Unit) {
         showFab = true
+    }
+
+    if (showFilters) {
+        ModalBottomSheet(
+            onDismissRequest = { showFilters = false },
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
+            tonalElevation = 4.dp
+        ) {
+            FiltersPanel(
+                filters = uiState.filters,
+                categories = uiState.categories,
+                onSearchChange = onSearchChange,
+                onToggleCategory = onToggleCategory,
+                onMinAmountChange = onMinAmountChange,
+                onMaxAmountChange = onMaxAmountChange,
+                onStartDateChange = onStartDateChange,
+                onEndDateChange = onEndDateChange,
+                onClearFilters = onClearFilters,
+                showSearch = false,
+                wrapInCard = false
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+        }
     }
 
     Scaffold(
@@ -159,7 +198,10 @@ fun ExpenseListScreen(
                 exit = scaleOut(targetScale = 0.9f) + fadeOut()
             ) {
                 FloatingActionButton(
-                    onClick = onAddExpense,
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onAddExpense()
+                    },
                     containerColor = MaterialTheme.colorScheme.secondary
                 ) {
                     Icon(
@@ -178,26 +220,26 @@ fun ExpenseListScreen(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item {
-                MonthSwitcher(
-                    monthLabel = formatMonth(uiState.month),
-                    onPreviousMonth = onPreviousMonth,
-                    onNextMonth = onNextMonth
-                )
-            }
-
-            item {
-                FiltersPanel(
-                    filters = uiState.filters,
-                    categories = uiState.categories,
-                    onSearchChange = onSearchChange,
-                    onToggleCategory = onToggleCategory,
-                    onMinAmountChange = onMinAmountChange,
-                    onMaxAmountChange = onMaxAmountChange,
-                    onStartDateChange = onStartDateChange,
-                    onEndDateChange = onEndDateChange,
-                    onClearFilters = onClearFilters
-                )
+            stickyHeader {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.background.copy(alpha = 0.96f))
+                        .padding(top = 8.dp, bottom = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    MonthSwitcher(
+                        monthLabel = formatMonth(uiState.month),
+                        onPreviousMonth = onPreviousMonth,
+                        onNextMonth = onNextMonth
+                    )
+                    FiltersCompactBar(
+                        filters = uiState.filters,
+                        onSearchChange = onSearchChange,
+                        onOpenFilters = { showFilters = true },
+                        onClearFilters = onClearFilters
+                    )
+                }
             }
 
             item {
@@ -260,7 +302,7 @@ private fun BrandHeader(
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             )
         }
         AccentPill(text = pillText)
@@ -396,7 +438,7 @@ private fun SummaryCard(total: Double, count: Int, subtitle: String) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = formatCurrency(total),
-                    style = MaterialTheme.typography.displaySmall,
+                    style = tabularStyle(MaterialTheme.typography.displaySmall),
                     color = Color.White
                 )
                 Spacer(modifier = Modifier.height(12.dp))
@@ -443,7 +485,7 @@ private fun MonthSwitcher(
         IconButton(
             onClick = onPreviousMonth,
             modifier = Modifier
-                .size(36.dp)
+                .size(48.dp)
                 .background(
                     MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
                     CircleShape
@@ -462,7 +504,7 @@ private fun MonthSwitcher(
         IconButton(
             onClick = onNextMonth,
             modifier = Modifier
-                .size(36.dp)
+                .size(48.dp)
                 .background(
                     MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
                     CircleShape
@@ -487,7 +529,9 @@ private fun FiltersPanel(
     onMaxAmountChange: (String) -> Unit,
     onStartDateChange: (LocalDate?) -> Unit,
     onEndDateChange: (LocalDate?) -> Unit,
-    onClearFilters: () -> Unit
+    onClearFilters: () -> Unit,
+    showSearch: Boolean = true,
+    wrapInCard: Boolean = true
 ) {
     var showStartPicker by rememberSaveable { mutableStateOf(false) }
     var showEndPicker by rememberSaveable { mutableStateOf(false) }
@@ -498,6 +542,7 @@ private fun FiltersPanel(
     val endPickerState = rememberDatePickerState(
         initialSelectedDateMillis = filters.endDate?.toEpochMillis()
     )
+    val focusManager = LocalFocusManager.current
     val fieldColors = OutlinedTextFieldDefaults.colors(
         focusedContainerColor = MaterialTheme.colorScheme.surface,
         unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
@@ -550,23 +595,24 @@ private fun FiltersPanel(
         }
     }
 
-    GlassCard(contentPadding = 16.dp) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Filters",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                if (filters.isActive()) {
-                    TextButton(onClick = onClearFilters) {
-                        Text("Clear")
-                    }
+    val content: @Composable ColumnScope.() -> Unit = {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Filters",
+                style = MaterialTheme.typography.titleMedium
+            )
+            if (filters.isActive()) {
+                TextButton(onClick = onClearFilters) {
+                    Text("Clear")
                 }
             }
+        }
 
+        if (showSearch) {
             OutlinedTextField(
                 value = filters.query,
                 onValueChange = onSearchChange,
@@ -579,47 +625,55 @@ private fun FiltersPanel(
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = fieldColors
+                colors = fieldColors,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() })
             )
+        }
 
-            if (categories.isNotEmpty()) {
-                Text(
-                    text = "Categories",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    categories.forEach { option ->
-                        val selected = filters.selectedCategories.contains(option.label)
-                        FilterChip(
-                            selected = selected,
-                            onClick = { onToggleCategory(option.label) },
-                            label = {
-                                Text("${option.emoji} ${option.label}")
-                            },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                                selectedLabelColor = MaterialTheme.colorScheme.primary,
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
-                            )
+        if (categories.isNotEmpty()) {
+            Text(
+                text = "Categories",
+                style = MaterialTheme.typography.titleMedium
+            )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                categories.forEach { option ->
+                    val selected = filters.selectedCategories.contains(option.label)
+                    FilterChip(
+                        selected = selected,
+                        onClick = { onToggleCategory(option.label) },
+                        label = {
+                            Text("${option.emoji} ${option.label}")
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                            selectedLabelColor = MaterialTheme.colorScheme.primary,
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
                         )
-                    }
+                    )
                 }
             }
+        }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
                 OutlinedTextField(
                     value = filters.minAmountInput,
                     onValueChange = onMinAmountChange,
                     label = { Text("Min") },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(16.dp),
-                    colors = fieldColors
+                    colors = fieldColors,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.clearFocus() })
                 )
                 OutlinedTextField(
                     value = filters.maxAmountInput,
@@ -627,33 +681,141 @@ private fun FiltersPanel(
                     label = { Text("Max") },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(16.dp),
-                    colors = fieldColors
+                    colors = fieldColors,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
                 )
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            OutlinedButton(
+                onClick = { showStartPicker = true },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(16.dp)
             ) {
-                OutlinedButton(
-                    onClick = { showStartPicker = true },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Text(
-                        text = filters.startDate?.let { "From ${formatDate(it)}" } ?: "Start date"
+                Text(
+                    text = filters.startDate?.let { "From ${formatDate(it)}" } ?: "Start date"
+                )
+            }
+            OutlinedButton(
+                onClick = { showEndPicker = true },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text(
+                    text = filters.endDate?.let { "To ${formatDate(it)}" } ?: "End date"
+                )
+            }
+        }
+    }
+
+    if (wrapInCard) {
+        GlassCard(contentPadding = 0.dp, verticalSpacing = 0.dp) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                content = content
+            )
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            content = content
+        )
+    }
+}
+
+@Composable
+private fun FiltersCompactBar(
+    filters: ExpenseFilters,
+    onSearchChange: (String) -> Unit,
+    onOpenFilters: () -> Unit,
+    onClearFilters: () -> Unit
+) {
+    val activeCount = filters.activeCount()
+    val focusManager = LocalFocusManager.current
+    val fieldColors = OutlinedTextFieldDefaults.colors(
+        focusedContainerColor = MaterialTheme.colorScheme.surface,
+        unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+        disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+        focusedBorderColor = MaterialTheme.colorScheme.primary,
+        unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant
+    )
+
+    GlassCard(contentPadding = 12.dp, verticalSpacing = 8.dp) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = filters.query,
+                onValueChange = onSearchChange,
+                label = { Text("Search") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = null
                     )
+                },
+                singleLine = true,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(16.dp),
+                colors = fieldColors,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() })
+            )
+
+            BadgedBox(
+                badge = {
+                    if (activeCount > 0) {
+                        Badge { Text(activeCount.toString()) }
+                    }
                 }
-                OutlinedButton(
-                    onClick = { showEndPicker = true },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(16.dp)
+            ) {
+                IconButton(
+                    onClick = onOpenFilters,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f),
+                            CircleShape
+                        )
                 ) {
-                    Text(
-                        text = filters.endDate?.let { "To ${formatDate(it)}" } ?: "End date"
+                    Icon(
+                        imageVector = Icons.Default.Tune,
+                        contentDescription = "Open filters"
                     )
                 }
             }
+        }
+
+        if (filters.isActive()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Tag(
+                    text = "Filters: $activeCount active",
+                    color = MaterialTheme.colorScheme.primary
+                )
+                TextButton(onClick = onClearFilters) {
+                    Text("Clear filters")
+                }
+            }
+        }
     }
 }
 
@@ -672,7 +834,7 @@ private fun SummaryPill(label: String, value: String) {
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.titleMedium,
+            style = tabularStyle(MaterialTheme.typography.titleMedium),
             fontWeight = FontWeight.SemiBold,
             color = Color.White
         )
@@ -713,7 +875,7 @@ private fun EmptyState(isFiltered: Boolean) {
                 "Tap + to add your first expense for this month."
             },
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
     }
 }
@@ -784,7 +946,7 @@ private fun ExpenseRow(
                     Text(
                         text = expense.note,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -800,7 +962,7 @@ private fun ExpenseRow(
             ) {
                 Text(
                     text = formatCurrency(expense.amount),
-                    style = MaterialTheme.typography.titleMedium,
+                    style = tabularStyle(MaterialTheme.typography.titleMedium),
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -810,7 +972,7 @@ private fun ExpenseRow(
                     IconButton(
                         onClick = onEdit,
                         modifier = Modifier
-                            .size(34.dp)
+                            .size(48.dp)
                             .background(
                                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f),
                                 CircleShape
@@ -824,7 +986,7 @@ private fun ExpenseRow(
                     IconButton(
                         onClick = onDelete,
                         modifier = Modifier
-                            .size(34.dp)
+                            .size(48.dp)
                             .background(
                                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f),
                                 CircleShape
@@ -856,6 +1018,10 @@ private fun Tag(text: String, color: Color) {
     )
 }
 
+private fun tabularStyle(base: TextStyle): TextStyle {
+    return base.copy(fontFeatureSettings = "tnum")
+}
+
 @Composable
 private fun CategoryPicker(
     categories: List<CategoryOption>,
@@ -874,52 +1040,69 @@ private fun CategoryPicker(
     ) {
         gridItems(categories, key = { it.label }) { option ->
             val isSelected = option.label == selected
+            val interactionSource = remember { MutableInteractionSource() }
             val background = if (isSelected) {
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
             } else {
                 MaterialTheme.colorScheme.surfaceVariant
             }
             val border = if (isSelected) {
-                MaterialTheme.colorScheme.primary
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
             } else {
                 MaterialTheme.colorScheme.surfaceVariant
             }
-            Column(
+            Box(
                 modifier = Modifier
-                    .shadow(if (isSelected) 8.dp else 0.dp, chipShape, clip = false)
+                    .shadow(0.dp, chipShape, clip = false)
                     .clip(chipShape)
                     .background(background)
                     .border(1.dp, border, chipShape)
-                    .clickable { onSelect(option) }
-                    .padding(horizontal = 8.dp, vertical = 10.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null
+                    ) { onSelect(option) }
+                    .padding(horizontal = 8.dp, vertical = 10.dp)
             ) {
-                Text(text = option.emoji, fontSize = 20.sp)
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = option.label,
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(text = option.emoji, fontSize = 20.sp)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = option.label,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (isSelected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
         if (onAddCategory != null) {
             item {
+                val interactionSource = remember { MutableInteractionSource() }
                 Column(
                     modifier = Modifier
                         .shadow(6.dp, chipShape, clip = false)
                         .clip(chipShape)
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                         .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, chipShape)
-                        .clickable { onAddCategory() }
+                        .clickable(
+                            interactionSource = interactionSource,
+                            indication = null
+                        ) { onAddCategory() }
                         .padding(horizontal = 8.dp, vertical = 10.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = null
+                        contentDescription = "Add category"
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
@@ -939,6 +1122,7 @@ private fun AddCategoryDialog(
 ) {
     var label by rememberSaveable { mutableStateOf("") }
     var emoji by rememberSaveable { mutableStateOf("✨") }
+    val focusManager = LocalFocusManager.current
     val canSave = label.isNotBlank()
 
     AlertDialog(
@@ -951,14 +1135,20 @@ private fun AddCategoryDialog(
                     onValueChange = { label = it },
                     label = { Text("Category name") },
                     placeholder = { Text("e.g. Pets") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.clearFocus() })
                 )
                 OutlinedTextField(
                     value = emoji,
                     onValueChange = { emoji = it },
                     label = { Text("Emoji") },
                     placeholder = { Text("🐶") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
                 )
             }
         },
@@ -1008,6 +1198,23 @@ fun InsightsScreen(
     onToggleReminders: (Boolean) -> Unit,
     onAddCategory: (String, String) -> Unit
 ) {
+    var showSettings by remember { mutableStateOf(false) }
+    if (showSettings) {
+        ModalBottomSheet(
+            onDismissRequest = { showSettings = false },
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
+            tonalElevation = 4.dp
+        ) {
+            SettingsSheet(
+                uiState = uiState,
+                onThemeModeChange = onThemeModeChange,
+                onAccentChange = onAccentChange,
+                onToggleReminders = onToggleReminders
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -1017,6 +1224,14 @@ fun InsightsScreen(
                         subtitle = "Glow up your budget",
                         pillText = "Deep dive"
                     )
+                },
+                actions = {
+                    IconButton(onClick = { showSettings = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings"
+                        )
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent
@@ -1037,22 +1252,6 @@ fun InsightsScreen(
                     monthLabel = formatMonth(uiState.month),
                     onPreviousMonth = onPreviousMonth,
                     onNextMonth = onNextMonth
-                )
-            }
-
-            item {
-                AppearanceCard(
-                    themeMode = uiState.themeMode,
-                    accent = uiState.themeAccent,
-                    onThemeModeChange = onThemeModeChange,
-                    onAccentChange = onAccentChange
-                )
-            }
-
-            item {
-                RemindersCard(
-                    enabled = uiState.remindersEnabled,
-                    onToggle = onToggleReminders
                 )
             }
 
@@ -1104,6 +1303,8 @@ private fun BudgetCard(
     month: YearMonth,
     onSetBudget: (Double?) -> Unit
 ) {
+    val focusManager = LocalFocusManager.current
+    val haptic = LocalHapticFeedback.current
     val fieldColors = OutlinedTextFieldDefaults.colors(
         focusedContainerColor = MaterialTheme.colorScheme.surface,
         unfocusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -1141,7 +1342,7 @@ private fun BudgetCard(
                             "Set a goal to stay on track"
                         },
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                 }
                 Column(
@@ -1170,7 +1371,7 @@ private fun BudgetCard(
                     Text(
                         text = "used",
                         style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                 }
             }
@@ -1183,11 +1384,11 @@ private fun BudgetCard(
                     Text(
                         text = "Spent",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                     Text(
                         text = formatCurrency(total),
-                        style = MaterialTheme.typography.titleMedium,
+                        style = tabularStyle(MaterialTheme.typography.titleMedium),
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -1195,11 +1396,11 @@ private fun BudgetCard(
                     Text(
                         text = "Remaining",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                     Text(
                         text = remaining?.let { formatCurrency(it) } ?: "--",
-                        style = MaterialTheme.typography.titleMedium,
+                        style = tabularStyle(MaterialTheme.typography.titleMedium),
                         fontWeight = FontWeight.SemiBold,
                         color = if (remaining != null && remaining < 0) {
                             MaterialTheme.colorScheme.secondary
@@ -1217,6 +1418,12 @@ private fun BudgetCard(
                 placeholder = { Text("500") },
                 shape = RoundedCornerShape(16.dp),
                 colors = fieldColors,
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -1229,6 +1436,7 @@ private fun BudgetCard(
                     onClick = {
                         val value = budgetValue ?: return@Button
                         if (value > 0.0) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onSetBudget(value)
                         }
                     },
@@ -1280,7 +1488,7 @@ private fun AppearanceCard(
                             ThemeMode.Light -> "Off"
                         },
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1358,7 +1566,7 @@ private fun RemindersCard(
                 Text(
                     text = "Daily check-in at 8:00 PM",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             }
             Switch(
@@ -1385,7 +1593,7 @@ private fun StreakCard(expenses: List<Expense>) {
                 Text(
                     text = "Log an expense today to start a streak ✨",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             } else {
                 Text(
@@ -1401,7 +1609,7 @@ private fun StreakCard(expenses: List<Expense>) {
                         Text(
                             text = "Best",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
                         Text(
                             text = "${stats.best} days",
@@ -1413,7 +1621,7 @@ private fun StreakCard(expenses: List<Expense>) {
                         Text(
                             text = "Pulse points",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
                         Text(
                             text = stats.points.toString(),
@@ -1512,7 +1720,7 @@ private fun RecurringExpensesCard(
                 Text(
                     text = "No recurring expenses yet.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             } else {
                 recurringExpenses.forEach { recurring ->
@@ -1564,14 +1772,14 @@ private fun RecurringExpenseRow(
                 Text(
                     text = "Every month on day ${recurringExpense.dayOfMonth}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             }
         }
         Column(horizontalAlignment = Alignment.End) {
             Text(
                 text = formatCurrency(recurringExpense.amount),
-                style = MaterialTheme.typography.titleMedium,
+                style = tabularStyle(MaterialTheme.typography.titleMedium),
                 fontWeight = FontWeight.SemiBold
             )
             IconButton(onClick = onDelete) {
@@ -1582,6 +1790,36 @@ private fun RecurringExpenseRow(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun SettingsSheet(
+    uiState: ExpenseUiState,
+    onThemeModeChange: (ThemeMode) -> Unit,
+    onAccentChange: (ThemeAccent) -> Unit,
+    onToggleReminders: (Boolean) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = "Settings",
+            style = MaterialTheme.typography.headlineSmall
+        )
+        AppearanceCard(
+            themeMode = uiState.themeMode,
+            accent = uiState.themeAccent,
+            onThemeModeChange = onThemeModeChange,
+            onAccentChange = onAccentChange
+        )
+        RemindersCard(
+            enabled = uiState.remindersEnabled,
+            onToggle = onToggleReminders
+        )
     }
 }
 
@@ -1597,6 +1835,8 @@ private fun AddRecurringDialog(
     } else {
         categories
     }
+    val focusManager = LocalFocusManager.current
+    val haptic = LocalHapticFeedback.current
     var amountInput by rememberSaveable { mutableStateOf("") }
     var dayInput by rememberSaveable { mutableStateOf("1") }
     var noteInput by rememberSaveable { mutableStateOf("") }
@@ -1628,7 +1868,13 @@ private fun AddRecurringDialog(
                     onValueChange = { amountInput = it },
                     label = { Text("Amount") },
                     placeholder = { Text("12.50") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.clearFocus() })
                 )
                 Text(
                     text = "Category",
@@ -1645,7 +1891,13 @@ private fun AddRecurringDialog(
                     onValueChange = { dayInput = it },
                     label = { Text("Day of month") },
                     placeholder = { Text("1 - 31") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
                 )
                 OutlinedTextField(
                     value = noteInput,
@@ -1661,6 +1913,7 @@ private fun AddRecurringDialog(
                 onClick = {
                     val amount = amountValue ?: return@Button
                     val day = dayValue ?: return@Button
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     onSave(amount, category, noteInput, day)
                 },
                 enabled = canSave
@@ -1724,13 +1977,13 @@ private fun CategoryBreakdownCard(expenses: List<Expense>) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = formatCurrency(totalAmount),
-                            style = MaterialTheme.typography.titleMedium,
+                            style = tabularStyle(MaterialTheme.typography.titleMedium),
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
                             text = "total",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
                     }
                 }
@@ -1742,7 +1995,7 @@ private fun CategoryBreakdownCard(expenses: List<Expense>) {
                         Text(
                             text = "No expenses yet.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
                     } else {
                         totals.take(5).forEach { slice ->
@@ -1762,7 +2015,7 @@ private fun CategoryBreakdownCard(expenses: List<Expense>) {
                                 )
                                 Text(
                                     text = formatCurrency(slice.total),
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    style = tabularStyle(MaterialTheme.typography.bodyMedium),
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }
@@ -1786,7 +2039,7 @@ private fun WeeklyTrendCard(expenses: List<Expense>, month: YearMonth) {
                 Text(
                     text = "No activity yet.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             } else {
                 Row(
@@ -1827,7 +2080,7 @@ private fun WeeklyTrendCard(expenses: List<Expense>, month: YearMonth) {
                             Text(
                                 text = week.label,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                                 textAlign = TextAlign.Center
                             )
                         }
@@ -1891,6 +2144,8 @@ fun ExpenseEditScreen(
     onAddCategory: (String, String) -> Unit
 ) {
     val isEditing = expense != null
+    val focusManager = LocalFocusManager.current
+    val haptic = LocalHapticFeedback.current
     val safeCategories = if (categories.isEmpty()) {
         listOf(CategoryOption("Other", "🧾"))
     } else {
@@ -1996,6 +2251,12 @@ fun ExpenseEditScreen(
                         isError = amountInput.isNotBlank() && !isAmountValid,
                         shape = RoundedCornerShape(16.dp),
                         colors = fieldColors,
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -2067,6 +2328,7 @@ fun ExpenseEditScreen(
             Button(
                 onClick = {
                     val amount = amountValue ?: return@Button
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     onSave(expense?.id, amount, category, date, note)
                 },
                 enabled = canSave,
