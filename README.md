@@ -1,21 +1,13 @@
-<img width="1080" height="2400" alt="Screenshot_20260204_234053" src="https://github.com/user-attachments/assets/a10d8a7e-85ee-41a0-9491-d0cbcce67d47" /><img width="1080" height="2400" alt="Screenshot_20260204_234053" src="https://github.com/user-attachments/assets/e64db7e2-82e8-4916-b695-63c612ac6f8f" /># PennyPulse – Expense Tracker (Android)
+# PennyPulse – Expense Tracker (Android)
 
 An aesthetic, offline-first expense tracker built with Kotlin, Jetpack Compose, and Room.
 
 ## Screenshots
 <p align="center">
-  <img width="1080" height="2400" alt="Screenshot_20260204_234212" src="https://github.com/user-attachments/assets/ee41a922-06ce-42a4-a181-fa8a984329a0" />
-<img width="1080" height="2400" alt="Screenshot_20260204_234226" src="https://github.com/user-attachments/assets/31e16f64-453a-480e-b175-21ea1b882e47" /><img width="1080" height="2400" alt="Screenshot_20260204_234242" src="https://github.com/user-attachments/assets/0c34e1bd-d1e6-4322-ae39-17db0afc98a7" <img width="1080" height="2400" alt="Screenshot_20260204_234256" src="https://github.com/user-attachments/assets/280e4cde-fc84-45<img width="1080" height="2400" alt="Screenshot_20260204_234249" src="https://github.com/user-attachments/assets/85503d87-0a39-4f0c-9ddb-2e82c734ce1a" />
-1c-92b8-2f1179a2f507" />
-/>
-
-<img width="1080" height="2400" alt="Screenshot_20260204_234231" src="https://github.com/user-attachments/assets/b9067f79-349f-4c5b-9e23-4e700012411d" />
-
-  <img width="1080" height="2400" alt="Screenshot_20260204_234053" src="https://github.com/user-attachments/assets/60ff8257-3c2d-41c5-badf-1a1fa1b26621" />
-
+  <img src="https://github.com/user-attachments/assets/5597c0da-1f07-478e-899b-329f4f363575" width="220" />
+  <img src="https://github.com/user-attachments/assets/84cc118c-3d7a-49c5-92f0-ba77c1365661" width="220" />
+  <img src="https://github.com/user-attachments/assets/3f4753ef-05a3-493d-bbd3-2ac29ddd1eea" width="220" />
 </p>
-
-
 
 ## Features
 - Expense tracking with add, edit, delete, notes, and date selection
