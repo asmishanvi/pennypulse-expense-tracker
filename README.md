@@ -8,12 +8,12 @@ An aesthetic, offline-first expense tracker built with Kotlin, Jetpack Compose, 
   <img src="https://github.com/user-attachments/assets/2748f0ae-eb86-4e6b-88c7-3d6f1c6a3aad" width="200" />
   <img src="https://github.com/user-attachments/assets/4511795e-bddc-45ff-9b60-5ef3d3f4bd57" width="200" />
   <img src="https://github.com/user-attachments/assets/648b72cf-89dd-4ad1-9b80-7453ddb4a365" width="200" />
+  <img src="https://github.com/user-attachments/assets/5c185e3c-823d-445e-9ce3-9c2b478d3efa" width="200" />
+  <img src="https://github.com/user-attachments/assets/7ccf9697-69ee-4954-84bf-1bbfbc44163e" width="200" />
 </p>
 
 ### Dark Mode
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/5c185e3c-823d-445e-9ce3-9c2b478d3efa" width="200" />
-  <img src="https://github.com/user-attachments/assets/7ccf9697-69ee-4954-84bf-1bbfbc44163e" width="200" />
   <img src="https://github.com/user-attachments/assets/98cf7f4d-ba7b-4277-852f-006833863b72" width="200" />
   <img src="https://github.com/user-attachments/assets/fa546fd9-c162-49ff-ab64-92f9a2a6b80f" width="200" />
 </p>
