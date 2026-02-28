@@ -19,3 +19,14 @@ Thumbs.db
 captures/
 externalNativeBuild/
 cxx/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/.env*
+
+# Backend
+backend/target/
+
+# Docker
+*.log

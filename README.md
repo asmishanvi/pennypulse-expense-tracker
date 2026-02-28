@@ -31,6 +31,12 @@ An aesthetic, offline-first expense tracker built with Kotlin, Jetpack Compose, 
 - Appearance settings: light/dark/system mode + accent color picker
 - Smooth UI motion: animated FAB, list item transitions, screen transitions
 
+## Full-Stack Web (Spring Boot + React)
+- REST API with budgeting, recurring expenses, analytics, and reminders
+- PostgreSQL + Flyway migrations
+- Docker Compose for local infra
+- CI workflow for build checks
+
 ## Data & Privacy
 - Offline-first: all data stays on device
 - Room database for local persistence
@@ -47,9 +53,31 @@ MVVM with Repository pattern and Room for persistence.
 ## Project Structure
 - `app/src/main/java/com/example/expensetracker/data` – Room entities, DAO, repository
 - `app/src/main/java/com/example/expensetracker/ui` – ViewModel and Compose screens
+- `backend` – Spring Boot REST API
+- `frontend` – React dashboard
+- `docker-compose.yml` – PostgreSQL + backend + frontend
 
 ## Getting Started
 Open the project in Android Studio and let it sync Gradle. If you want to update versions, edit `build.gradle.kts` and `app/build.gradle.kts`.
+
+## Local Dev (Web)
+Backend:
+```
+cd backend
+mvn spring-boot:run
+```
+
+Frontend:
+```
+cd frontend
+npm install
+npm run dev
+```
+
+Docker:
+```
+docker compose up --build
+```
 
 ## Permissions
 - `POST_NOTIFICATIONS` (Android 13+) for budget alerts and smart reminders
